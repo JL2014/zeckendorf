@@ -13,7 +13,7 @@ struct Big {
 };
 
 void build_fib_sequence(vector<Big> &fib, const fmpz_t n) {
-    Big a, b, c;
+    Big a, b, c, tmp;
 
     fmpz_set_ui(a.v, 1);  // F1
     fmpz_set_ui(b.v, 2);  // F2
@@ -27,7 +27,7 @@ void build_fib_sequence(vector<Big> &fib, const fmpz_t n) {
             break;
 
         fib.push_back(c);
-        Big tmp = b;
+        tmp = b;
         b = c;
         a = tmp;
     }
