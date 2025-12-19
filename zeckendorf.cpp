@@ -1,87 +1,71 @@
 // Compile : g++ -O2 zeckendorf.cpp -o zeckendorf `pkg-config --cflags --libs flint`
 #include <iostream>
-#include <vector>
 #include <flint/fmpz.h>
 
 using namespace std;
 
-struct Big {
-    fmpz_t v;
-    Big() { fmpz_init(v); }
-    Big(const Big &b) { fmpz_init(v); fmpz_set(v, b.v); }
-    ~Big() { fmpz_clear(v); }
-};
-
-void build_fib_sequence(vector<Big> &fib, const fmpz_t n) {
-    Big a, b, c, tmp;
-
-    fmpz_set_ui(a.v, 1);  // F1
-    fmpz_set_ui(b.v, 2);  // F2
-
-    fib.push_back(a);
-    fib.push_back(b);
-
-    while (true) {
-        fmpz_add(c.v, a.v, b.v);
-        if (fmpz_cmp(c.v, n) > 0)
-            break;
-
-        fib.push_back(c);
-        tmp = b;
-        b = c;
-        a = tmp;
-    }
-}
-
-void zeckendorf(const fmpz_t n) {
-    vector<Big> fib;
-    build_fib_sequence(fib, n);
-
-    fmpz_t r;
-    fmpz_init_set(r, n);
-    vector<Big> out;
-    Big c;
-
-    for (int i = fib.size() - 1; i >= 0; i--) {
-        if (fmpz_cmp(fib[i].v, r) <= 0) {
-            fmpz_set(c.v, fib[i].v);
-            out.push_back(c);
-
-            fmpz_sub(r, r, fib[i].v);
-
-            i--; // règle Zeckendorf : pas de F(k-1)
-
-            if (fmpz_is_zero(r))
-                break;
-        }
-    }
-
-    cerr << "n = ";
-    for (size_t i = 0; i < out.size(); i++) {
-        fmpz_print(out[i].v);
-        if (i + 1 < out.size())
-            cout << " + ";
-    }
-    cout << endl;
-
-    fmpz_clear(r);
-}
-
 int main(int argc, char* argv[]) {
     if (argc != 2) {
-        cerr << "Usage: fib <n-as-decimal-string>" << endl;
+        cerr << "Usage: " << argv[0] << " <n-as-decimal-string>" << endl;
         return 1;
     }
 
     fmpz_t n;
     fmpz_init(n);
     if (fmpz_set_str(n, argv[1], 10) != 0) {
-        cerr << "Erreur: n invalide\n";
+        cerr << "Error: invalid value for n" << endl;
         return 2;
     }
 
-    zeckendorf(n);
+    const int MAX_FIB = 10000;
+    fmpz_t fib[MAX_FIB];
+    int count = 0;
 
+    fmpz_init(fib[0]); fmpz_set_ui(fib[0], 1); count++;
+    fmpz_init(fib[1]); fmpz_set_ui(fib[1], 2); count++;
+
+    while (true) {
+        if (count >= MAX_FIB) {
+          cerr << "MAX_FIB too low" << endl;
+          return 3;
+        }
+
+        fmpz_init(fib[count]);
+        fmpz_add(fib[count], fib[count-1], fib[count-2]);
+
+        if (fmpz_cmp(fib[count], n) > 0) {
+            fmpz_clear(fib[count]);
+            break;
+        }
+        count++;
+    }
+
+    bool first = true;
+    fmpz_t rem;
+    fmpz_init_set(rem, n);
+
+    cout << "n = ";
+    for (int i = count-1; i >= 0; i--) {
+        if (fmpz_cmp(fib[i], rem) <= 0) {
+            if (!first) cout << " + ";
+            fmpz_print(fib[i]);
+            first = false;
+
+            fmpz_sub(rem, rem, fib[i]);
+
+            // Zeckendorf : on saute F_{k-1} pour éviter 2 consécutifs
+            i--;
+
+            if (fmpz_is_zero(rem)) break;
+        }
+    }
+    cout << endl;
+
+    // 3. Nettoyage
+    for (int i = 0; i < count; i++)
+        fmpz_clear(fib[i]);
+    fmpz_clear(rem);
     fmpz_clear(n);
+
     return 0;
 }
