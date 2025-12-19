@@ -53,15 +53,13 @@ int main(int argc, char* argv[]) {
 
             fmpz_sub(rem, rem, fib[i]);
 
-            // Zeckendorf : on saute F_{k-1} pour éviter 2 consécutifs
-            i--;
+            i--; // Zeckendorf : on saute F_{k-1} pour éviter 2 consécutifs
 
             if (fmpz_is_zero(rem)) break;
         }
     }
     cout << endl;
 
-    // 3. Nettoyage
     for (int i = 0; i < count; i++)
         fmpz_clear(fib[i]);
     fmpz_clear(rem);
