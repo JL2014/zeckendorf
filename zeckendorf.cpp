@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
     fmpz_t rem;
     fmpz_init_set(rem, n);
 
-    cout << "n = ";
+    cerr << "n = ";
     for (int i = count-1; i >= 0; i--) {
         if (fmpz_cmp(fib[i], rem) <= 0) {
             if (!first) cout << " + ";
